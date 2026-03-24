@@ -41,55 +41,60 @@
         }
     </script>
     <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
-
-    <script>
-        // 2. IMAGE PATH FIXER
-        const renderer = new marked.Renderer();
+<script>
+    async function loadBlog() {
+        const container = document.getElementById('blog-posts');
         const username = "sachinarati";
         const repo = "ai-blog";
+        
+        try {
+            // 1. Fetch the list of files
+            const response = await fetch(`https://api.github.com/repos/${username}/${repo}/contents/posts`);
+            const files = await response.json();
 
-        renderer.image = function(href, title, text) {
-            let cleanHref = href;
-            if (href.startsWith('../images/')) {
-                const fileName = href.split('/').pop();
-                // Forces the browser to load the direct raw image link
-                cleanHref = `https://raw.githubusercontent.com/${username}/${repo}/main/images/${fileName}`;
+            // If it's not an array, the API failed
+            if (!Array.isArray(files)) {
+                console.error("API Error:", files);
+                throw new Error("Could not fetch post list");
             }
-            return `<img src="${cleanHref}" alt="${text || ''}" class="rounded-xl shadow-lg my-6">`;
-        };
 
-        marked.setOptions({ renderer: renderer });
+            // 2. Filter, Reverse, and Slice to 10
+            const postsToShow = files
+                .filter(f => f.name.endsWith('.md'))
+                .reverse()
+                .slice(0, 10);
 
-        async function loadBlog() {
-            const container = document.getElementById('blog-posts');
-            
-            try {
-                const response = await fetch(`https://api.github.com/repos/${username}/${repo}/contents/posts`);
-                const files = await response.json();
-
-                if (!Array.isArray(files)) throw new Error("No posts found.");
-
-                // 3. LIMIT TO 10 POSTS & SORT NEWEST FIRST
-                const latestTen = files
-                    .filter(f => f.name.endsWith('.md'))
-                    .reverse()
-                    .slice(0, 10);
-
-                container.innerHTML = ''; 
-
-                for (const file of latestTen) {
-                    const rawMd = await fetch(file.download_url).then(res => res.text());
-                    const postElement = document.createElement('article');
-                    postElement.className = "bg-white p-8 rounded-2xl shadow-sm border border-slate-100 prose prose-slate max-w-none";
-                    postElement.innerHTML = marked.parse(rawMd);
-                    container.appendChild(postElement);
-                }
-            } catch (err) {
-                container.innerHTML = `<p class="text-center text-slate-400">Ready for your first post! Upload 'input.jpg' to begin.</p>`;
+            if (postsToShow.length === 0) {
+                container.innerHTML = "<p class='text-center'>No .md files found in /posts folder.</p>";
+                return;
             }
+
+            container.innerHTML = ''; // Clear loading message
+
+            for (const file of postsToShow) {
+                // Get the raw text of the markdown file
+                const postRes = await fetch(file.download_url);
+                let markdown = await postRes.text();
+
+                // 3. THE IMAGE FIXER (Simple Version)
+                // This replaces "../images/" with the real web URL so the browser can see it
+                const rawImageBase = `https://raw.githubusercontent.com/${username}/${repo}/main/images/`;
+                markdown = markdown.replace(/\.\.\/images\//g, rawImageBase);
+
+                const article = document.createElement('article');
+                article.className = "bg-white p-8 rounded-2xl shadow-sm border mb-12 prose max-w-none";
+                
+                // Render the fixed markdown
+                article.innerHTML = marked.parse(markdown);
+                container.appendChild(article);
+            }
+        } catch (err) {
+            console.error("Fetch Error:", err);
+            container.innerHTML = `<p class='text-center text-red-500'>Error loading posts. Check console (F12) for details.</p>`;
         }
-
-        loadBlog();
-    </script>
+    }
+    loadBlog();
+</script>
+  
 </body>
 </html>
