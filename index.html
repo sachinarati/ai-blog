@@ -19,7 +19,7 @@
         async function fetchPosts() {
             const container = document.getElementById('content');
             // 1. EDIT THIS: Use your actual GitHub username and repo name
-            const repo = "YOUR_USERNAME/YOUR_REPO_NAME";
+            const repo = "sachinarati/ai-blog";
             
             const res = await fetch(`https://api.github.com/repos/${repo}/posts`);
             const files = await res.json();
