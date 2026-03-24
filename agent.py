@@ -5,65 +5,72 @@ import shutil
 import glob
 from openai import OpenAI
 
-# 1. Setup client for GitHub Models (2026 Endpoint)
+# Initialize OpenAI Client (GitHub Models)
 client = OpenAI(
-    base_url="https://models.github.ai/inference",
+    base_url="https://models.inference.ai.azure.com",
     api_key=os.environ.get("GITHUB_TOKEN")
 )
 
-def generate_blog():
+def process_images():
+    # 1. Automatic Folder Creation
     os.makedirs("posts", exist_ok=True)
-    os.makedirs("images", exist_ok=True)
+    os.makedirs("images/processed", exist_ok=True)
     
-    input_path = "images/input.jpg"
-    if not os.path.exists(input_path):
-        print("⏸️ No input.jpg found. Skipping...")
+    # 2. Look for any new images in the main /images folder
+    valid_extensions = ['*.jpg', '*.jpeg', '*.png', '*.JPG', '*.JPEG', '*.PNG']
+    all_files = []
+    for ext in valid_extensions:
+        all_files.extend(glob.glob(f"images/{ext}"))
+    
+    if not all_files:
+        print("No new images found in /images to process.")
         return
 
-    # 2. CLEANUP: Delete all archived photos to keep the repo clean
-    old_photos = glob.glob("images/photo-*.jpg")
-    for photo in old_photos:
-        os.remove(photo)
-        print(f"🗑️ Cleaned up: {photo}")
+    print(f"Found {len(all_files)} new image(s). Processing...")
 
-    # 3. ARCHIVE: Create a unique name for the new post
-    timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M")
-    unique_img = f"photo-{timestamp}.jpg"
-    shutil.copy(input_path, f"images/{unique_img}")
+    for img_path in all_files:
+        # Skip if the path is the 'processed' folder itself
+        if os.path.isdir(img_path): continue
+            
+        try:
+            filename = os.path.basename(img_path)
+            timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+            file_extension = os.path.splitext(filename)[1]
+            
+            # Unique name for the permanent archive
+            unique_name = f"photo-{timestamp}{file_extension}"
+            
+            # 3. Read and Encode image
+            with open(img_path, "rb") as image_file:
+                encoded_image = base64.b64encode(image_file.read()).decode("utf-8")
 
-    # 4. AI ANALYSIS
-    with open(f"images/{unique_img}", "rb") as f:
-        encoded_image = base64.b64encode(f.read()).decode("utf-8")
-
-    print(f"🤖 Analyzing {unique_img}...")
-    try:
-        response = client.chat.completions.create(
-            messages=[
-                {
+            # 4. AI Generation
+            response = client.chat.completions.create(
+                messages=[{
                     "role": "user",
                     "content": [
-                        {"type": "text", "text": "Write a professional blog post about this image in very detail and engaging format which will grab the user attention. Start with a # Title."},
-                        {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{encoded_image}"}},
-                    ],
-                }
-            ],
-            model="gpt-4o-mini"
-        )
+                        {"type": "text", "text": "Write a high-quality, engaging blog post about this image in Markdown. Use a creative title."},
+                        {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{encoded_image}"}}
+                    ]
+                }],
+                model="gpt-4o-mini"
+            )
 
-        ai_text = response.choices[0].message.content
-        
-        # 5. LINK IMAGE & SAVE
-        # We point to the unique archived image
-        img_link = f"![Blog Visual](../images/{unique_img})\n\n"
-        with open(f"posts/post-{timestamp}.md", "w") as f:
-            f.write(img_link + ai_text)
+            # 5. Create Markdown File (Points to the 'processed' path)
+            markdown_content = f"![Blog Image](../images/processed/{unique_name})\n\n"
+            markdown_content += response.choices[0].message.content
+            
+            with open(f"posts/post-{timestamp}.md", "w") as f:
+                f.write(markdown_content)
 
-        # 6. DELETE INPUT: Remove the trigger file so it doesn't loop
-        os.remove(input_path)
-        print(f"✅ Success! Post generated and input.jpg cleared.")
+            # 6. MOVE the image to prevent re-processing
+            dest_path = f"images/processed/{unique_name}"
+            shutil.move(img_path, dest_path)
+            
+            print(f"✅ Successfully processed: {filename}")
 
-    except Exception as e:
-        print(f"❌ Error: {e}")
+        except Exception as e:
+            print(f"❌ Error processing {img_path}: {e}")
 
 if __name__ == "__main__":
-    generate_blog()
+    process_images()
