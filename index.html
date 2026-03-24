@@ -3,151 +3,136 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Visual Stories </title>
-
+    <title>Visual Archive | AI Blog</title>
+    
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@unocss/reset/tailwind.css">
     <script src="https://cdn.jsdelivr.net/npm/@unocss/runtime"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     
     <style>
-        :root {
-            --glass: rgba(255, 255, 255, 0.95);
-            --accent: #6366f1;
-            --bg-gradient: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        :root { 
+            --glass: rgba(255, 255, 255, 0.95); 
+            --accent: #6366f1; 
         }
         
         body { 
-            background: var(--bg-gradient);
-            background-attachment: fixed;
-            min-height: 100vh;
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
-            color: #1e293b;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); 
+            background-attachment: fixed; 
+            min-height: 100vh; 
+            font-family: 'Inter', system-ui, sans-serif; 
+            position: relative;
         }
 
-        /* Glassmorphism Card Style */
-        article {
-            background: var(--glass);
-            backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.6);
-            border-radius: 2.5rem;
-            box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.04);
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        /* TOP-LEFT TRANSLATE BUTTON */
+        #google_translate_element { 
+            position: fixed; /* Stays in corner during scroll */
+            top: 20px; 
+            left: 20px; 
+            z-index: 9999;
+            background: white; 
+            padding: 6px 16px; 
+            border-radius: 50px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
+            border: 1px solid #e2e8f0; 
         }
 
-        article:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 30px 40px -15px rgba(0, 0, 0, 0.1);
-        }
-
-        /* Image Polish */
-        article img {
-            border-radius: 1.5rem;
-            box-shadow: 0 15px 25px -10px rgba(0, 0, 0, 0.2);
-            margin: 2.5rem 0;
-            border: 6px solid white;
-            width: 100%;
-            display: block;
-        }
-
-        /* Professional Translate Button */
-        #google_translate_element {
-            display: inline-block;
-            background: white;
-            padding: 8px 20px;
-            border-radius: 50px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            border: 1px solid #e2e8f0;
-            transition: all 0.2s;
-        }
-        #google_translate_element:hover {
-            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.15);
-            border-color: var(--accent);
-        }
+        /* Clean up Google UI */
         .goog-te-gadget span { display: none !important; }
         .goog-te-combo { 
-            border: none; outline: none; background: transparent;
-            cursor: pointer; font-size: 14px; font-weight: 600; color: #4f46e5;
+            border: none; outline: none; background: transparent; 
+            cursor: pointer; font-size: 13px; font-weight: 600; color: #4f46e5;
+        }
+
+        /* Blog Card Styling */
+        article { 
+            background: var(--glass); 
+            backdrop-filter: blur(12px); 
+            border-radius: 2.5rem; 
+            border: 1px solid rgba(255,255,255,0.6); 
+            transition: all 0.3s ease;
+        }
+        article:hover { transform: translateY(-5px); box-shadow: 0 25px 40px rgba(0,0,0,0.08); }
+
+        /* Professional Image Handling */
+        article img { 
+            border-radius: 1.5rem; 
+            margin: 2rem 0; 
+            width: 100%; 
+            box-shadow: 0 12px 24px rgba(0,0,0,0.12); 
+            border: 5px solid white; 
         }
 
         /* Load More Button */
-        .btn-load {
-            padding: 16px 40px; background: var(--accent); color: white;
-            border-radius: 99px; font-weight: 700; cursor: pointer;
-            box-shadow: 0 12px 24px -6px rgba(99, 102, 241, 0.5);
-            transition: all 0.3s ease;
-            display: inline-flex; align-items: center; gap: 10px;
+        .btn-load { 
+            padding: 16px 36px; 
+            background: var(--accent); 
+            color: white; 
+            border-radius: 50px; 
+            font-weight: 700; 
+            cursor: pointer; 
+            box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
+            transition: transform 0.2s;
         }
-        .btn-load:hover { filter: brightness(1.1); transform: scale(1.03); }
+        .btn-load:hover { transform: scale(1.05); filter: brightness(1.1); }
 
-        /* Typography Fixes */
-        .prose h1, .prose h2 { color: #0f172a; font-weight: 800; }
-        .prose p { line-height: 1.8; color: #475569; }
+        /* Responsive spacing for mobile */
+        @media (max-width: 640px) {
+            #google_translate_element { top: 10px; left: 10px; padding: 4px 10px; }
+            header { padding-top: 60px; }
+        }
     </style>
 </head>
-<body class="p-4 md:p-10">
+<body class="p-6 md:p-12">
 
-    <header class="max-w-4xl mx-auto text-center pt-16 pb-20">
-        <div class="inline-flex items-center px-5 py-1.5 mb-8 text-xs font-black tracking-widest text-indigo-600 uppercase bg-indigo-100/80 rounded-full border border-indigo-200">
-            <span class="relative flex h-2 w-2 mr-3">
-              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-              <span class="relative inline-flex rounded-full h-2 w-2 bg-indigo-600"></span>
-            </span>
-            AI Visual Journal
-        </div>
-        <h1 class="text-6xl md:text-7xl font-black text-slate-900 tracking-tighter leading-none">
-            Visual <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600">Archive</span>
+    <div id="google_translate_element"></div>
+
+    <header class="max-w-4xl mx-auto text-center pt-12 pb-16">
+        <h1 class="text-6xl font-black text-slate-900 mb-4 tracking-tighter">
+            Visual <span class="text-indigo-600">Archive</span>
         </h1>
-        <p class="text-slate-500 mt-6 text-xl max-w-xl mx-auto font-medium">Auto-generated stories by AI.</p>
-        
-        <div class="mt-10">
-            <div id="google_translate_element"></div>
-        </div>
+        <p class="text-slate-500 text-lg">AI-powered stories from Shizuoka, Japan</p>
     </header>
 
-    <main id="blog-posts" class="max-w-3xl mx-auto space-y-20">
-        </main>
+    <main id="blog-posts" class="max-w-3xl mx-auto space-y-16"></main>
 
-    <div id="load-more-container" class="flex justify-center py-24">
-        </div>
+    <div id="load-more-container" class="flex justify-center py-20"></div>
 
     <script type="text/javascript">
         function googleTranslateElementInit() {
             new google.translate.TranslateElement({
                 pageLanguage: 'en',
-                // Added Marathi (mr) and Hindi (hi)
                 includedLanguages: 'en,ja,mr,hi,es,fr', 
                 layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
                 autoDisplay: false
             }, 'google_translate_element');
         }
     </script>
-    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+    <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 
     <script>
         let allPosts = [];
         let displayedCount = 0;
-        const BATCH_SIZE = 5; // --- YOUR 5 POST LIMIT ---
+        const BATCH_SIZE = 5; // Loads 5 at a time
         const username = "sachinarati";
         const repo = "ai-blog";
 
         async function initBlog() {
             const container = document.getElementById('blog-posts');
             try {
-                const response = await fetch(`https://api.github.com/repos/${username}/${repo}/contents/posts?t=${Date.now()}`);
-                const files = await response.json();
+                // Fetch list of posts from GitHub
+                const res = await fetch(`https://api.github.com/repos/${username}/${repo}/contents/posts?t=${Date.now()}`);
+                const files = await res.json();
                 
-                if (!Array.isArray(files)) throw new Error();
+                if (!Array.isArray(files)) throw new Error("No files found");
 
-                // Sort newest first
+                // Filter markdown and sort newest first
                 allPosts = files
-                    .filter(f => f.name.toLowerCase().endsWith('.md'))
+                    .filter(f => f.name.endsWith('.md'))
                     .sort((a, b) => b.name.localeCompare(a.name));
 
                 renderNextBatch();
-            } catch (err) {
-                container.innerHTML = `<div class="text-center p-20 bg-white/50 rounded-[3rem] border-2 border-dashed border-slate-300">
-                    <p class="text-slate-400 text-lg font-bold italic">The archive is currently empty. Upload a photo to begin.</p>
-                </div>`;
+            } catch (e) {
+                container.innerHTML = `<div class="text-center p-12 bg-white/50 rounded-3xl border-2 border-dashed border-slate-300 text-slate-400">Archive is ready. Upload an image to start.</div>`;
             }
         }
 
@@ -156,42 +141,33 @@
             const nextBatch = allPosts.slice(displayedCount, displayedCount + BATCH_SIZE);
             
             for (const file of nextBatch) {
-                try {
-                    const postRes = await fetch(file.download_url);
-                    let markdown = await postRes.text();
+                const postRes = await fetch(file.download_url);
+                let markdown = await postRes.text();
 
-                    // Automatic Image Path Fixer
-                    const rawImageBase = `https://raw.githubusercontent.com/${username}/${repo}/main/images/`;
-                    markdown = markdown.replace(/\.\.\/images\//g, rawImageBase);
-
-                    const article = document.createElement('article');
-                    article.className = "p-10 md:p-16 prose prose-slate max-w-none";
-                    article.innerHTML = marked.parse(markdown);
-                    container.appendChild(article);
-                } catch (e) {
-                    console.error("Post loading failed", e);
-                }
+                // IMAGE PATH FIXER: Changes ../images/processed/ to a live GitHub URL
+                const rawBase = `https://raw.githubusercontent.com/${username}/${repo}/main/images/processed/`;
+                markdown = markdown.replace(/\.\.\/images\/processed\//g, rawBase);
+                
+                const article = document.createElement('article');
+                article.className = "p-10 md:p-14 prose prose-slate max-w-none";
+                article.innerHTML = marked.parse(markdown);
+                container.appendChild(article);
             }
 
             displayedCount += nextBatch.length;
-            updateLoadMoreButton();
+            updatePaginationUI();
         }
 
-        function updateLoadMoreButton() {
-            const btnContainer = document.getElementById('load-more-container');
-            btnContainer.innerHTML = ''; 
-
+        function updatePaginationUI() {
+            const container = document.getElementById('load-more-container');
             if (displayedCount < allPosts.length) {
-                const btn = document.createElement('button');
-                btn.className = 'btn-load';
-                btn.innerHTML = `
-                    <span>Show 5 More</span> 
-                    <span class="px-2 py-0.5 text-[10px] bg-white/30 rounded-full font-bold uppercase tracking-widest">${allPosts.length - displayedCount} Left</span>
+                container.innerHTML = `
+                    <button class="btn-load" onclick="renderNextBatch()">
+                        View Older Posts (${allPosts.length - displayedCount} left)
+                    </button>
                 `;
-                btn.onclick = renderNextBatch;
-                btnContainer.appendChild(btn);
             } else if (allPosts.length > 0) {
-                btnContainer.innerHTML = `<p class="text-slate-400 font-bold tracking-widest uppercase text-xs">End of Archive ✨</p>`;
+                container.innerHTML = `<p class="text-slate-400 font-bold uppercase tracking-widest text-xs">End of Archive ✨</p>`;
             }
         }
 
