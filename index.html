@@ -62,7 +62,7 @@
             const postsToShow = files
                 .filter(f => f.name.endsWith('.md'))
                 .reverse()
-                .slice(0, 10);
+                .slice(0, 5);
 
             if (postsToShow.length === 0) {
                 container.innerHTML = "<p class='text-center'>No .md files found in /posts folder.</p>";
