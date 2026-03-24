@@ -15,27 +15,52 @@
     <main id="content" class="max-w-3xl mx-auto py-12 px-6 space-y-12">
         </main>
 
-    <script>
-        async function fetchPosts() {
-            const container = document.getElementById('content');
-            // 1. EDIT THIS: Use your actual GitHub username and repo name
-            const repo = "sachinarati/ai-blog";
+<script>
+    async function fetchPosts() {
+        const container = document.getElementById('content');
+        // 1. Double check these match your GitHub URL exactly!
+        const username = "sachinarati";
+        const repo = "ai-blog";
+        
+        try {
+            // Fetching the list of files from the 'posts' folder
+            const apiUrl = `https://api.github.com/repos/${username}/${repo}/contents/posts`;
+            const response = await fetch(apiUrl);
             
-            const res = await fetch(`https://api.github.com/repos/${repo}/posts`);
-            const files = await res.json();
+            if (!response.ok) throw new Error("Could not find the 'posts' folder on GitHub.");
+            
+            const files = await response.json();
+            
+            // If the folder is empty
+            if (files.length === 0) {
+                container.innerHTML = "<p class='text-center text-gray-400'>The 'posts' folder is empty. Upload input.jpg to create your first post!</p>";
+                return;
+            }
+
+            container.innerHTML = ''; // Clear loading message
 
             for (const file of files.reverse()) {
                 if (file.name.endsWith('.md')) {
-                    const raw = await fetch(file.download_url).then(r => r.text());
-                    const section = document.createElement('article');
-                    section.className = "prose prose-slate lg:prose-xl bg-white p-8 rounded-xl shadow-sm border";
-                    section.innerHTML = marked.parse(raw);
-                    container.appendChild(section);
+                    // Use 'raw.githubusercontent.com' to bypass CORS issues
+                    const rawUrl = `https://raw.githubusercontent.com/${username}/${repo}/main/posts/${file.name}`;
+                    const postRes = await fetch(rawUrl);
+                    const rawMd = await postRes.text();
+
+                    const article = document.createElement('article');
+                    article.className = "prose prose-slate lg:prose-xl bg-white p-8 rounded-xl shadow-sm border mb-8";
+                    
+                    // Render the Markdown to HTML
+                    article.innerHTML = marked.parse(rawMd);
+                    container.appendChild(article);
                 }
             }
+        } catch (err) {
+            console.error("Blog Error:", err);
+            container.innerHTML = `<p class='text-red-500 text-center'>Error: ${err.message}<br>Check if your repo is Public.</p>`;
         }
-        fetchPosts();
-    </script>
+    }
+    fetchPosts();
+</script>
     <style> img { border-radius: 8px; width: 100%; } </style>
 </body>
 </html>
