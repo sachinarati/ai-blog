@@ -1,0 +1,4 @@
+# Ignore the actual images and temporary python files
+images/input.jpg
+__pycache__/
+.env
